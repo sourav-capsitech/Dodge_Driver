@@ -10,8 +10,9 @@ public class GameManager : MonoBehaviour
     [Header("UI References")]
     // Uses TextMeshProUGUI for modern text components
     public TextMeshProUGUI scoreText; 
+    public TextMeshProUGUI highScoreText; // NEW: Reference for displaying the High Score
     public GameObject gameLogo; // Sprite or GameObject for the game title screen
-    public GameObject gameOverLogo; // NEW: Sprite or GameObject for the Game Over title
+    public GameObject gameOverLogo; // Sprite or GameObject for the Game Over title
     public GameObject gameOverPanel;
     public Button playButton;
     public Button restartButton;
@@ -27,6 +28,7 @@ public class GameManager : MonoBehaviour
 
     // --- Game State Variables ---
     private int score = 0;
+    private int highScore = 0; // NEW: Variable to store the highest score
     private bool isGameOver = false;
     private bool isGameActive = false;
 
@@ -47,6 +49,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Get reference to the SpawnManager
+        // NOTE: Using FindAnyObjectByType to avoid CS0618 obsolete warning
         spawnManager = FindAnyObjectByType<SpawnManager>();
         
         // --- INITIAL UI SETUP (Game Start State) ---
@@ -56,7 +59,7 @@ public class GameManager : MonoBehaviour
         {
             gameOverPanel.SetActive(false);
         }
-        if (gameOverLogo != null) // NEW: Hide Game Over Logo
+        if (gameOverLogo != null) // Hide Game Over Logo
         {
             gameOverLogo.SetActive(false);
         }
@@ -78,7 +81,6 @@ public class GameManager : MonoBehaviour
         if (restartButton != null)
         {
             // If the restart button is outside the panel, hide it here.
-            // If it's inside gameOverPanel, this line is optional but harmless.
             restartButton.gameObject.SetActive(false); 
             restartButton.onClick.RemoveAllListeners();
             restartButton.onClick.AddListener(RestartGame);
@@ -89,6 +91,10 @@ public class GameManager : MonoBehaviour
     {
         // Pause the game until the player clicks 'Play'
         Time.timeScale = 0f; 
+        
+        // NEW: Load High Score from PlayerPrefs. Default to 0 if none found.
+        highScore = PlayerPrefs.GetInt("HighScore", 0); 
+
         UpdateScoreText();
 
         // Ensure spawner is paused/disabled initially
@@ -157,6 +163,15 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         Time.timeScale = 0f; // Pause the game
 
+        // NEW: Check and Save High Score
+        if (score > highScore)
+        {
+            highScore = score;
+            PlayerPrefs.SetInt("HighScore", highScore);
+            PlayerPrefs.Save(); // Ensure data is written to disk immediately
+            UpdateScoreText(); // Update the display with the new high score
+        }
+
         // DISABLE the spawner when the game ends
         if (spawnManager != null)
         {
@@ -180,11 +195,11 @@ public class GameManager : MonoBehaviour
         {
             gameOverPanel.SetActive(true);
         }
-        if (gameOverLogo != null) // NEW: Show Game Over Logo
+        if (gameOverLogo != null) // Show Game Over Logo
         {
             gameOverLogo.SetActive(true);
         }
-        if (restartButton != null) // NEW: Show Restart Button
+        if (restartButton != null) // Show Restart Button
         {
             restartButton.gameObject.SetActive(true);
         }
@@ -201,9 +216,16 @@ public class GameManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
+        // Update Current Score
         if (scoreText != null)
         {
             scoreText.text = "Score: " + score;
+        }
+        
+        // NEW: Update High Score
+        if (highScoreText != null)
+        {
+            highScoreText.text = "High Score: " + highScore;
         }
     }
 }
