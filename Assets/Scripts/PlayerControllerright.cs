@@ -76,7 +76,7 @@ public class PlayerControllerright : MonoBehaviour
             // Game Over for all players
             GameManager.Instance.GameOver();
         }
-        
+
         // Check for collision with the coin collectible (assuming tag is "Coin")
         else if (other.CompareTag("Coin"))
         {
@@ -84,4 +84,6 @@ public class PlayerControllerright : MonoBehaviour
             GameManager.Instance.CollectCoin(other.gameObject);
         }
     }
+    
+    
 }
