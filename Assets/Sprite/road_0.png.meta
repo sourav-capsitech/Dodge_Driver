@@ -142,7 +142,7 @@ TextureImporter:
         x: 0
         y: 0
         width: 1080
-        height: 1916
+        height: 1913
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -151,8 +151,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c03dbdee4fb9a684883130718ff88966
-      internalID: -613536200
+      spriteID: b8a30a4e16ddf6346ac7803cf2a37a90
+      internalID: 2001944543
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 7fbe91b1aff1af245b3ba6e74bf6a5a9
+    spriteID: 5e4783e4596375549952d4b4963cfeff
     internalID: 0
     vertices: []
     indices: 
@@ -171,7 +171,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      road_0_0: -613536200
+      road_0_0: 2001944543
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
