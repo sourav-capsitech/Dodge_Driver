@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Coin
   - Car
+  - Sensor
   layers:
   - Default
   - TransparentFX

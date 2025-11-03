@@ -10,12 +10,13 @@ public class GameManager : MonoBehaviour
     [Header("UI References")]
     // Uses TextMeshProUGUI for modern text components
     public TextMeshProUGUI scoreText; 
-    public TextMeshProUGUI highScoreText; // NEW: Reference for displaying the High Score
+    public TextMeshProUGUI highScoreText; // Reference for displaying the High Score
     public GameObject gameLogo; // Sprite or GameObject for the game title screen
     public GameObject gameOverLogo; // Sprite or GameObject for the Game Over title
     public GameObject gameOverPanel;
     public Button playButton;
     public Button restartButton;
+    public Button exitButton; // NEW: Reference for the Exit/Main Menu Button
 
     [Header("Audio References")]
     // AudioSources should be attached to the GameManager GameObject
@@ -28,7 +29,7 @@ public class GameManager : MonoBehaviour
 
     // --- Game State Variables ---
     private int score = 0;
-    private int highScore = 0; // NEW: Variable to store the highest score
+    private int highScore = 0; // Variable to store the highest score
     private bool isGameOver = false;
     private bool isGameActive = false;
 
@@ -41,7 +42,6 @@ public class GameManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Ensure the GameManager persists across scenes if needed, though for a simple restart we don't need DontDestroyOnLoad
         }
         else
         {
@@ -49,7 +49,6 @@ public class GameManager : MonoBehaviour
         }
 
         // Get reference to the SpawnManager
-        // NOTE: Using FindAnyObjectByType to avoid CS0618 obsolete warning
         spawnManager = FindAnyObjectByType<SpawnManager>();
         
         // --- INITIAL UI SETUP (Game Start State) ---
@@ -64,7 +63,7 @@ public class GameManager : MonoBehaviour
             gameOverLogo.SetActive(false);
         }
         
-        // 2. Show Start UI elements
+        // 2. Show Start UI elements (These will be immediately hidden in Start() if it's a direct restart)
         if (gameLogo != null)
         {
             gameLogo.SetActive(true);
@@ -80,32 +79,61 @@ public class GameManager : MonoBehaviour
         // 3. Hook up Restart Button (control individually if outside the panel)
         if (restartButton != null)
         {
-            // If the restart button is outside the panel, hide it here.
+            // Hide the restart button initially
             restartButton.gameObject.SetActive(false); 
             restartButton.onClick.RemoveAllListeners();
             restartButton.onClick.AddListener(RestartGame);
+        }
+
+        // 4. Hook up Exit Button (NEW)
+        if (exitButton != null)
+        {
+            exitButton.gameObject.SetActive(false); // Hide initially
+            exitButton.onClick.RemoveAllListeners();
+            exitButton.onClick.AddListener(ExitToMainMenu); // Set the new main menu function
         }
     }
 
     private void Start()
     {
-        // Pause the game until the player clicks 'Play'
-        Time.timeScale = 0f; 
-        
-        // NEW: Load High Score from PlayerPrefs. Default to 0 if none found.
-        highScore = PlayerPrefs.GetInt("HighScore", 0); 
+        // 1. Check if this is a direct restart (value 1 means yes)
+        bool isDirectRestart = PlayerPrefs.GetInt("IsRestart", 0) == 1;
 
+        // 2. IMPORTANT: Clear the flag immediately so the *next* scene reload (e.g., after Game Over) 
+        // goes back to the standard title screen flow.
+        PlayerPrefs.SetInt("IsRestart", 0);
+        
+        // Load High Score from PlayerPrefs. Default to 0 if none found. (This always runs)
+        highScore = PlayerPrefs.GetInt("HighScore", 0); 
         UpdateScoreText();
 
-        // Ensure spawner is paused/disabled initially
-        if (spawnManager != null)
+        if (isDirectRestart)
         {
-            spawnManager.enabled = false;
+            // === DIRECT RESTART LOGIC (From Restart button) ===
+            // Skip the title screen and start immediately
+            StartGame();
+            
+            // Explicitly ensure title screen UI elements are hidden
+            if (gameLogo != null) gameLogo.SetActive(false);
+            if (playButton != null) playButton.gameObject.SetActive(false);
+        }
+        else
+        {
+            // === INITIAL GAME START / TITLE SCREEN LOGIC (Standard Load or Exit to Menu) ===
+            
+            // Pause the game until the player clicks 'Play'
+            Time.timeScale = 0f; 
+
+            // Ensure spawner is paused/disabled initially
+            if (spawnManager != null)
+            {
+                spawnManager.enabled = false;
+            }
         }
     }
     
     /// <summary>
-    /// Called when the player presses the initial Play button.
+    /// Called when the player presses the initial Play button or immediately on a direct restart.
     /// </summary>
     public void StartGame()
     {
@@ -147,8 +175,6 @@ public class GameManager : MonoBehaviour
             score++;
             UpdateScoreText();
             Destroy(coin); // Destroy the coin after collection
-            
-            // Optional: Play coin collection sound here if you add a reference for it
         }
     }
 
@@ -163,7 +189,7 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         Time.timeScale = 0f; // Pause the game
 
-        // NEW: Check and Save High Score
+        // Check and Save High Score
         if (score > highScore)
         {
             highScore = score;
@@ -184,33 +210,59 @@ public class GameManager : MonoBehaviour
             backgroundMusicSource.Stop();
         }
         
-        // 2. Play collision sound (using PlayOneShot for a non-looping sound effect)
+        // 2. Play collision sound 
         if (collisionSoundSource != null && collisionSoundClip != null)
         {
             collisionSoundSource.PlayOneShot(collisionSoundClip);
         }
         
-        // 3. Show Game Over UI (Panel, Logo, and Button)
+        // 3. Show Game Over UI (Panel, Logo, and Buttons)
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
         }
-        if (gameOverLogo != null) // Show Game Over Logo
+        if (gameOverLogo != null) 
         {
             gameOverLogo.SetActive(true);
         }
-        if (restartButton != null) // Show Restart Button
+        if (restartButton != null) 
         {
             restartButton.gameObject.SetActive(true);
+        }
+        if (exitButton != null) // Show Exit Button
+        {
+            exitButton.gameObject.SetActive(true);
         }
     }
 
     /// <summary>
     /// Called when the player presses the Restart button.
+    /// Sets the 'IsRestart' flag and reloads the scene to skip the title screen.
     /// </summary>
     public void RestartGame()
     {
-        // Reloads the current scene. Make sure the scene is added to Build Settings!
+        // 1. Set a flag in PlayerPrefs to tell the next scene instance to skip the title screen
+        PlayerPrefs.SetInt("IsRestart", 1);
+        PlayerPrefs.Save(); 
+
+        // 2. Reloads the current scene.
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    /// <summary>
+    /// MODIFIED: Called when the player presses the Exit button.
+    /// Reloads the scene without the 'IsRestart' flag, ensuring a full environment reset
+    /// and returning to the paused title screen state.
+    /// </summary>
+    public void ExitToMainMenu()
+    {
+        // 1. Ensure the 'IsRestart' flag is set to 0. 
+        // This makes the newly loaded scene run the "else" block in Start(), 
+        // which pauses the game and shows the title screen UI.
+        PlayerPrefs.SetInt("IsRestart", 0);
+        PlayerPrefs.Save(); 
+
+        // 2. Reloads the current scene to cleanly reset all objects and scripts.
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -222,7 +274,7 @@ public class GameManager : MonoBehaviour
             scoreText.text = "Score: " + score;
         }
         
-        // NEW: Update High Score
+        // Update High Score
         if (highScoreText != null)
         {
             highScoreText.text = "High Score: " + highScore;
