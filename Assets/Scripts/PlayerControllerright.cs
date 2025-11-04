@@ -12,7 +12,7 @@ public class PlayerControllerright : MonoBehaviour
 
     // Road limits derived from 10.8 total width centered at 0
     private const float minX = 0f; // The central line
-    private const float maxX = 5.4f;
+    private const float maxX = 3.6f;
 
     // Tracks if the car is currently in the near center lane (leftLaneX) or the far right lane (rightLaneX).
     // true = Near Center (1.35f) | false = Far Right (4.05f)

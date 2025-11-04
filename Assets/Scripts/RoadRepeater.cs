@@ -26,7 +26,7 @@ public class RoadRepeater : MonoBehaviour
         startZ = transform.position.z;
         
         // Use '3' for the smoothest, off-screen transition buffer.
-        resetDistance = 3f * roadLength;
+        resetDistance = 3.5f * roadLength;
     }
 
     private void Update()
